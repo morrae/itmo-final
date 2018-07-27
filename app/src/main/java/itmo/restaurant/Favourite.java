@@ -500,7 +500,7 @@ public class Favourite extends Activity {
 			}
 
 		}
-	}
+
 
 	private void ContinueIntent() {
 		Intent iv = new Intent(Favourite.this, Detailpage.class);
