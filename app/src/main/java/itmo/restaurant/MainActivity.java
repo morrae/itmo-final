@@ -1,17 +1,5 @@
 package itmo.restaurant;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.w3c.dom.Document;
-
-import itmo.getset.CustomMarker;
-import itmo.util.ConnectionDetector;
-import itmo.util.GPSTracker;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Color;
@@ -28,7 +16,6 @@ import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -40,241 +27,254 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.maps.GeoPoint;
-import com.google.android.maps.Overlay;
+
+import org.w3c.dom.Document;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import itmo.getset.CustomMarker;
+import itmo.util.ConnectionDetector;
+import itmo.util.GPSTracker;
+
 
 public class MainActivity extends FragmentActivity {
 
-	List<Overlay> mapOverlays;
-	GeoPoint point1, point2;
-	LocationManager locManager;
-	Drawable drawable;
-	Document document;
-	v2GetRouteDirection v2GetRouteDirection;
-	LatLng fromPosition;
-	LatLng toPosition;
-	GoogleMap mGoogleMap;
-	MarkerOptions markerOptions;
-	Location location;
-	String lat, lng, map, nm, ad, id, rate;
-	double destlat, destlng, curlst, curlng;
-	GPSTracker gps;
-	double latitude;
-	double longitude;
-	Button btn_detail;
-	private HashMap<CustomMarker, Marker> markersHashMap;
-	private Iterator<Entry<CustomMarker, Marker>> iter;
-	private CameraUpdate cu;
-	private CustomMarker customMarkerOne, customMarkerTwo;
-	Boolean isInternetPresent = false;
-	ConnectionDetector cd;
-	View layout12;
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+    LocationManager locManager;
+    Drawable drawable;
+    Document document;
+    v2GetRouteDirection v2GetRouteDirection;
+    LatLng fromPosition;
+    LatLng toPosition;
+    GoogleMap mGoogleMap;
+    MarkerOptions markerOptions;
+    Location location;
+    String lat, lng, map, nm, ad, id, rate;
+    double destlat, destlng, curlst, curlng;
+    GPSTracker gps;
+    double latitude;
+    double longitude;
+    Button btn_detail;
+    private HashMap<CustomMarker, Marker> markersHashMap;
+    private Iterator<Entry<CustomMarker, Marker>> iter;
+    private CameraUpdate cu;
+    private CustomMarker customMarkerOne, customMarkerTwo;
+    Boolean isInternetPresent = false;
+    ConnectionDetector cd;
+    View layout12;
 
-		cd = new ConnectionDetector(getApplicationContext());
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
 
-		isInternetPresent = cd.isConnectingToInternet();
-		if (isInternetPresent) {
+        cd = new ConnectionDetector(getApplicationContext());
 
-			btn_detail = (Button) findViewById(R.id.btn_detail);
-			markersHashMap = new HashMap<CustomMarker, Marker>();
-			try {
-				MapsInitializer.initialize(getApplicationContext());
-			} catch (GooglePlayServicesNotAvailableException e) {
-				e.printStackTrace();
-			}
+        isInternetPresent = cd.isConnectingToInternet();
+        if (isInternetPresent) {
 
-			gps = new GPSTracker(MainActivity.this);
-			// проверка работы gps
-			if (gps.canGetLocation()) {
-				latitude = gps.getLatitude();
-				longitude = gps.getLongitude();
+            btn_detail = (Button) findViewById(R.id.btn_detail);
+            markersHashMap = new HashMap<CustomMarker, Marker>();
+            MapsInitializer.initialize(getApplicationContext());
 
-			} else {
-				// Не работает gps, просим его вкллючить
-				gps.showSettingsAlert();
-			}
-			Intent iv = getIntent();
-			lat = iv.getStringExtra("lat");
-			lng = iv.getStringExtra("lng");
-			map = iv.getStringExtra("map");
-			nm = iv.getStringExtra("nm");
-			ad = iv.getStringExtra("ad");
-			id = iv.getStringExtra("id");
-			rate = iv.getStringExtra("rate");
+            gps = new GPSTracker(MainActivity.this);
+            // проверка работы gps
+            if (gps.canGetLocation()) {
+                latitude = gps.getLatitude();
+                longitude = gps.getLongitude();
 
-			try {
-				destlat = Double.parseDouble(lat);
-				destlng = Double.parseDouble(lng);
-				// curlst = Double.parseDouble(latitude);
-				// curlng = Double.parseDouble(longitude);
-			} catch (NumberFormatException e) {
-				e.printStackTrace();
-			}
+            } else {
+                // Не работает gps, просим его вкллючить
+                gps.showSettingsAlert();
+            }
+            Intent iv = getIntent();
+            lat = iv.getStringExtra("lat");
+            lng = iv.getStringExtra("lng");
+            map = iv.getStringExtra("map");
+            nm = iv.getStringExtra("nm");
+            ad = iv.getStringExtra("ad");
+            id = iv.getStringExtra("id");
+            rate = iv.getStringExtra("rate");
 
-			v2GetRouteDirection = new v2GetRouteDirection();
-			SupportMapFragment supportMapFragment = (SupportMapFragment) getSupportFragmentManager()
-					.findFragmentById(R.id.map);
-			mGoogleMap = supportMapFragment.getMap();
+            try {
+                destlat = Double.parseDouble(lat);
+                destlng = Double.parseDouble(lng);
+                // curlst = Double.parseDouble(latitude);
+                // curlng = Double.parseDouble(longitude);
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
 
-			// включаем MyLocation в гуглкартах
-			mGoogleMap.setMyLocationEnabled(true);
-			mGoogleMap.getUiSettings().setZoomControlsEnabled(true);
-			mGoogleMap.getUiSettings().setCompassEnabled(true);
-			mGoogleMap.getUiSettings().setMyLocationButtonEnabled(true);
-			mGoogleMap.getUiSettings().setAllGesturesEnabled(true);
-			mGoogleMap.setTrafficEnabled(true);
-			mGoogleMap.animateCamera(CameraUpdateFactory.zoomTo(-5));
-			markerOptions = new MarkerOptions();
-			fromPosition = new LatLng(latitude, longitude);
-			// fromPosition = new LatLng(40.7127, -74.006086);
-			// toPosition = new LatLng(destlat, destlng);
-			toPosition = new LatLng(21.2049, 72.8406);
-			GetRouteTask getRoute = new GetRouteTask();
+            v2GetRouteDirection = new v2GetRouteDirection();
+            SupportMapFragment supportMapFragment = (SupportMapFragment) getSupportFragmentManager()
+                    .findFragmentById(R.id.map);
+            supportMapFragment.getMapAsync(googleMap -> {
+                googleMap = mGoogleMap;
+                // включаем MyLocation в гуглкартах
+                mGoogleMap.setMyLocationEnabled(true);
+                mGoogleMap.getUiSettings().setZoomControlsEnabled(true);
+                mGoogleMap.getUiSettings().setCompassEnabled(true);
+                mGoogleMap.getUiSettings().setMyLocationButtonEnabled(true);
+                mGoogleMap.getUiSettings().setAllGesturesEnabled(true);
+                mGoogleMap.setTrafficEnabled(true);
+                mGoogleMap.animateCamera(CameraUpdateFactory.zoomTo(-5));
+                markerOptions = new MarkerOptions();
+                fromPosition = new LatLng(latitude, longitude);
+                // fromPosition = new LatLng(40.7127, -74.006086);
+                // toPosition = new LatLng(destlat, destlng);
+                toPosition = new LatLng(21.2049, 72.8406);
+                GetRouteTask getRoute = new GetRouteTask();
 
-			// рисуем дорогу от текущего места до назаначения
-			getRoute.execute();
-		} else {
-			// Нет интернета
-			RelativeLayout rl_back = (RelativeLayout) findViewById(R.id.rl_back);
-			if (rl_back == null) {
-				Log.d("second", "second");
-				RelativeLayout rl_dialoguser = (RelativeLayout) findViewById(R.id.rl_infodialog);
+                // рисуем дорогу от текущего места до назаначения
+                getRoute.execute();
 
-				layout12 = getLayoutInflater().inflate(
-						R.layout.connectiondialog, rl_dialoguser, false);
+        });
 
-				rl_dialoguser.startAnimation(AnimationUtils.loadAnimation(
-						MainActivity.this,R.anim.popup));
-				Button btn_yes = (Button) layout12.findViewById(R.id.btn_yes);
-				btn_yes.setOnClickListener(new OnClickListener() {
 
-					@Override
-					public void onClick(View v) {
-						finish();
-					}
-				});
-			}
-		}
-		
-	}
+    } else
 
-	private class GetRouteTask extends AsyncTask<String, Void, String> {
+    {
+        // Нет интернета
+        RelativeLayout rl_back = (RelativeLayout) findViewById(R.id.rl_back);
+        if (rl_back == null) {
+            Log.d("second", "second");
+            RelativeLayout rl_dialoguser = (RelativeLayout) findViewById(R.id.rl_infodialog);
 
-		private ProgressDialog Dialog;
-		String response = "";
+            layout12 = getLayoutInflater().inflate(
+                    R.layout.connectiondialog, rl_dialoguser, false);
 
-		@Override
-		protected void onPreExecute() {
-			Dialog = new ProgressDialog(MainActivity.this);
-			Dialog.setMessage("Загружаем путь...");
-			Dialog.show();
-		}
+            rl_dialoguser.startAnimation(AnimationUtils.loadAnimation(
+                    MainActivity.this, R.anim.popup));
+            Button btn_yes = (Button) layout12.findViewById(R.id.btn_yes);
+            btn_yes.setOnClickListener(new OnClickListener() {
 
-		@Override
-		protected String doInBackground(String... urls) {
-			// получаем значения пути
-			document = v2GetRouteDirection.getDocument(fromPosition,
-					toPosition,
-					itmo.restaurant.v2GetRouteDirection.MODE_DRIVING);
-			response = "Успешно";
-			return response;
+                @Override
+                public void onClick(View v) {
+                    finish();
+                }
+            });
+        }
+    }
 
-		}
+}
 
-		@Override
-		protected void onPostExecute(String result) {
-			mGoogleMap.clear();
-			if (response.equalsIgnoreCase("Успешно")) {
-				ArrayList<LatLng> directionPoint = v2GetRouteDirection
-						.getDirection(document);
-				PolylineOptions rectLine = new PolylineOptions().width(10)
-						.color(Color.RED);
+private class GetRouteTask extends AsyncTask<String, Void, String> {
 
-				for (int i = 0; i < directionPoint.size(); i++) {
-					rectLine.add(directionPoint.get(i));
-				}
-				// добавляем путь на карту
-				mGoogleMap.addPolyline(rectLine);
-				markerOptions.position(toPosition);
-				markerOptions.draggable(true);
-				customMarkerOne = new CustomMarker("markerOne", latitude,
-						longitude);
-				customMarkerTwo = new CustomMarker("markerOne", 21.2049,
-						72.8406);
-				Marker newMark = mGoogleMap.addMarker(markerOptions);
-				// mGoogleMap.addMarker(markerOptions);
+    private ProgressDialog Dialog;
+    String response = "";
 
-				addMarkerToHashMap(customMarkerOne, newMark);
-				addMarkerToHashMap(customMarkerTwo, newMark);
-				zoomToMarkers(btn_detail);
-				mGoogleMap
-						.setOnMarkerClickListener(new OnMarkerClickListener() {
+    @Override
+    protected void onPreExecute() {
+        Dialog = new ProgressDialog(MainActivity.this);
+        Dialog.setMessage("Загружаем путь...");
+        Dialog.show();
+    }
 
-							@Override
-							public boolean onMarkerClick(Marker arg0) {
-								Button btn_detail = (Button) findViewById(R.id.btn_detail);
-								btn_detail.setVisibility(View.VISIBLE);
-								btn_detail.setText("" + arg0.getPosition()
-										+ "\n" + "Название: " + nm + "\n"
-										+ "Адрес: " + ad);
-								return false;
-							}
-						});
-			}
+    @Override
+    protected String doInBackground(String... urls) {
+        // получаем значения пути
+        document = v2GetRouteDirection.getDocument(fromPosition,
+                toPosition,
+                itmo.restaurant.v2GetRouteDirection.MODE_DRIVING);
+        response = "Успешно";
+        return response;
 
-			Dialog.dismiss();
-		}
-	}
+    }
 
-	public void addMarkerToHashMap(CustomMarker customMarker, Marker marker) {
-		setUpMarkersHashMap();
-		markersHashMap.put(customMarker, marker);
+    @Override
+    protected void onPostExecute(String result) {
+        mGoogleMap.clear();
+        if (response.equalsIgnoreCase("Успешно")) {
+            ArrayList<LatLng> directionPoint = v2GetRouteDirection
+                    .getDirection(document);
+            PolylineOptions rectLine = new PolylineOptions().width(10)
+                    .color(Color.RED);
 
-	}
+            for (int i = 0; i < directionPoint.size(); i++) {
+                rectLine.add(directionPoint.get(i));
+            }
+            // добавляем путь на карту
+            mGoogleMap.addPolyline(rectLine);
+            markerOptions.position(toPosition);
+            markerOptions.draggable(true);
+            customMarkerOne = new CustomMarker("markerOne", latitude,
+                    longitude);
+            customMarkerTwo = new CustomMarker("markerOne", 21.2049,
+                    72.8406);
+            Marker newMark = mGoogleMap.addMarker(markerOptions);
+            // mGoogleMap.addMarker(markerOptions);
 
-	public void setUpMarkersHashMap() {
-		if (markersHashMap == null) {
-			markersHashMap = new HashMap<CustomMarker, Marker>();
-		}
-	}
+            addMarkerToHashMap(customMarkerOne, newMark);
+            addMarkerToHashMap(customMarkerTwo, newMark);
+            zoomToMarkers(btn_detail);
+            mGoogleMap
+                    .setOnMarkerClickListener(new OnMarkerClickListener() {
 
-	public void zoomToMarkers(View v) {
-		zoomAnimateLevelToFitMarkers(120);
-	}
+                        @Override
+                        public boolean onMarkerClick(Marker arg0) {
+                            Button btn_detail = (Button) findViewById(R.id.btn_detail);
+                            btn_detail.setVisibility(View.VISIBLE);
+                            btn_detail.setText("" + arg0.getPosition()
+                                    + "\n" + "Название: " + nm + "\n"
+                                    + "Адрес: " + ad);
+                            return false;
+                        }
+                    });
+        }
 
-	public void zoomAnimateLevelToFitMarkers(int padding) {
-		iter = markersHashMap.entrySet().iterator();
-		LatLngBounds.Builder b = new LatLngBounds.Builder();
+        Dialog.dismiss();
+    }
 
-		LatLng ll = null;
-		while (iter.hasNext()) {
-			Map.Entry mEntry = iter.next();
-			CustomMarker key = (CustomMarker) mEntry.getKey();
+}
 
-			ll = new LatLng(key.getCustomMarkerLatitude(),
-					key.getCustomMarkerLongitude());
-			b.include(ll);
-		}
-		try {
-			LatLngBounds bounds = b.build();
-			Log.d("bounds", "" + bounds);
-			cu = CameraUpdateFactory.newLatLngBounds(bounds, 25);
-			mGoogleMap.animateCamera(cu);
-		} catch (IllegalStateException e) {
-			e.printStackTrace();
-		}
+    public void addMarkerToHashMap(CustomMarker customMarker, Marker marker) {
+        setUpMarkersHashMap();
+        markersHashMap.put(customMarker, marker);
 
-	}
+    }
 
-	@Override
-	protected void onStop() {
-		super.onStop();
-		finish();
-	}
+    public void setUpMarkersHashMap() {
+        if (markersHashMap == null) {
+            markersHashMap = new HashMap<CustomMarker, Marker>();
+        }
+    }
+
+    public void zoomToMarkers(View v) {
+        zoomAnimateLevelToFitMarkers(120);
+    }
+
+    public void zoomAnimateLevelToFitMarkers(int padding) {
+        iter = markersHashMap.entrySet().iterator();
+        LatLngBounds.Builder b = new LatLngBounds.Builder();
+
+        LatLng ll = null;
+        while (iter.hasNext()) {
+            Map.Entry mEntry = iter.next();
+            CustomMarker key = (CustomMarker) mEntry.getKey();
+
+            ll = new LatLng(key.getCustomMarkerLatitude(),
+                    key.getCustomMarkerLongitude());
+            b.include(ll);
+        }
+        try {
+            LatLngBounds bounds = b.build();
+            Log.d("bounds", "" + bounds);
+            cu = CameraUpdateFactory.newLatLngBounds(bounds, 25);
+            mGoogleMap.animateCamera(cu);
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        finish();
+    }
 
 }
